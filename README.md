@@ -1,18 +1,10 @@
 # Config Page
 
-This project has been created using **webpack-cli**, you can now run
+When first pulling, run `npm install`
 
+To run, use `npm run start`
+
+To build run
 ```
 npm run build
 ```
-
-or
-
-```
-yarn build
-```
-
-to bundle your application
-
-## Notes
-- For themes, load / save CSS files. However, color selection won't work unless specific variables are set in :root. (See src/theme.css)
