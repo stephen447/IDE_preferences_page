@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Config</title>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <div id="colorPickingDiv" style="display:flex">
+            <div class="topRowColumn colorColumn">
+                Brackets: <input type="color" id="brackets"><br>
+                Cursor: <input type="color" id="cursor"><br>
+                Selection: <input type="color" id="selection"><br>
+                Line Numbers: <input type="color" id="linenumber"><br>
+                Comments: <input type="color" id="comment"><br>
+            </div>
+            <div class="topRowColumn colorColumn">
+                Literals: <input type="color" id="literal"><br>
+                Attributes: <input type="color" id="attribute"><br>
+                Def: <input type="color" id="def"><br>
+                Tag: <input type="color" id="tag"><br>
+                Type: <input type="color" id="type"><br>
+            </div>
+            <div class="topRowColumn colorColumn">
+                Property: <input type="color" id="property"><br>
+                Keyword: <input type="color" id="keyword"><br>
+                Built-in: <input type="color" id="builtin"><br>
+                String: <input type="color" id="string"><br>
+                Variable: <input type="color" id="variable"><br>
+            </div>
+            <div class="topRowColumn colorColumn">
+                Function: <input type="color" id="function"><br>
+                Active Background: <input type="color" id="activebg"><br>
+            </div>
+            <div class="topRowColumn">
+                <form id="fontSizeForm">
+                    <label for="quantity">Default Font Size:</label>
+                    <input type="number" id="quantity" name="quantity" min="6" max="100" step="2" value="10">
+                    <input type="submit">
+                  </form>                  
+            </div>
+        </div>
+        <hr>
+        <div>
+            Upload a Theme: <input type="file" id="uploadTheme">
+            Save Theme: <a id="saveLink" href="#"><button id="saveTheme">Save Theme</button></a>
+        </div>
+        <br>
+        <div>
+            <div class="codeEditor" id="originalEditor"></div>
+            <div class="codeEditor" id="previewEditor"></div>
+        </div>
+    </body>
+    
+</html>

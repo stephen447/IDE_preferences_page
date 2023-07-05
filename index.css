@@ -1,0 +1,10 @@
+.topRowColumn {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    border-right: 1px solid rgba(0,0,0,0.3);
+}
+
+.codeEditor {
+    float: left;
+    width: 50%;
+}

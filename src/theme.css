@@ -1,0 +1,65 @@
+/* Based on Sublime Text's monokai theme; from CodeMirror themes */
+:root {
+  --brackets: #f8f8f2;
+  --cursor: #f8f8f0;
+  --bg: #272822;
+  --selection: #464646;
+  --linenumber: #d0d0d0;
+  --comment: #918e7b;
+  --literal: #ae81ff;
+  --attribute: #97b747;
+  --def: #bc9262;
+  --tag: #bc6283;
+  --type: #5998a6;
+  --property: #a6e22e;
+  --keyword: #f92672;
+  --builtin: #66d9ef;
+  --string: #e6db74;
+  --variable: #9effff;
+  --function: #fd971f;
+  --activebg: #373831;
+  --fontsize: 12pt;
+}
+.cm-s-theme.CodeMirror{
+  font-size: var(--fontsize);
+}
+
+.cm-s-theme.CodeMirror { background: var(--bg); color: var(--brackets); }
+.cm-s-theme div.CodeMirror-selected { background: var(--selection); }
+.cm-s-theme .CodeMirror-line::selection, .cm-s-theme .CodeMirror-line > span::selection, .cm-s-theme .CodeMirror-line > span > span::selection { background: var(--selection); }
+.cm-s-theme .CodeMirror-line::-moz-selection, .cm-s-theme .CodeMirror-line > span::-moz-selection, .cm-s-theme .CodeMirror-line > span > span::-moz-selection { background: var(--selection); }
+.cm-s-theme .CodeMirror-gutters { background: var(--bg); border-right: 0px; }
+.cm-s-theme .CodeMirror-guttermarker { color: var(--brackets); }
+.cm-s-theme .CodeMirror-guttermarker-subtle { color: var(--linenumber); }
+.cm-s-theme .CodeMirror-linenumber { color: var(--linenumber); }
+.cm-s-theme .CodeMirror-cursor { border-left: 1px solid var(--cursor); }
+
+.cm-s-theme span.cm-comment { color: var(--comment); }
+.cm-s-theme span.cm-atom { color: var(--literal); }
+.cm-s-theme span.cm-number { color: var(--literal); }
+
+.cm-s-theme span.cm-comment.cm-attribute { color: var(--attribute); }
+.cm-s-theme span.cm-comment.cm-def { color: var(--def); }
+.cm-s-theme span.cm-comment.cm-tag { color: var(--tag); }
+.cm-s-theme span.cm-comment.cm-type { color: var(--type); }
+
+.cm-s-theme span.cm-property, .cm-s-theme span.cm-attribute { color: var(--property); }
+.cm-s-theme span.cm-keyword { color: var(--keyword); }
+.cm-s-theme span.cm-builtin { color: var(--builtin); }
+.cm-s-theme span.cm-string { color: var(--string); }
+
+.cm-s-theme span.cm-variable { color: var(--variable); }
+.cm-s-theme span.cm-variable-2 { color: var(--variable); }
+.cm-s-theme span.cm-variable-3, .cm-s-theme span.cm-type { color: var(--builtin); }
+.cm-s-theme span.cm-def { color: var(--function); }
+.cm-s-theme span.cm-bracket { color: var(--brackets); }
+.cm-s-theme span.cm-tag { color: var(--keyword); }
+.cm-s-theme span.cm-header { color: var(--literal); }
+.cm-s-theme span.cm-link { color: var(--literal); }
+.cm-s-theme span.cm-error { background: var(--keyword); color: var(--cursor); }
+
+.cm-s-theme .CodeMirror-activeline-background { background: var(--activebg); }
+.cm-s-theme .CodeMirror-matchingbracket {
+  text-decoration: underline;
+  color: var(--cursor) !important;
+}
