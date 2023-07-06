@@ -18,9 +18,11 @@
     --const_variable: #9effff;
     --const_function: #fd971f;
     --const_activebg: #373831;
-    --const_fontsize: 12pt;
+    --const_fontsize: 10pt;
+    --const_font: monospace;
   }
   .cm-s-constTheme.CodeMirror{
+    font-family: var(--const_font);
     font-size: var(--const_fontsize);
   }
   
@@ -60,6 +62,6 @@
   
   .cm-s-constTheme .CodeMirror-activeline-background { background: var(--const_activebg); }
   .cm-s-constTheme .CodeMirror-matchingbracket {
-    text-decoration: underline;
-    color: var(--const_cursor) !important;
+    background: var(--selection);
+    color: var(--cursor) !important;
   }

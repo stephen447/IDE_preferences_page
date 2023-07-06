@@ -18,9 +18,11 @@
   --variable: #9effff;
   --function: #fd971f;
   --activebg: #373831;
-  --fontsize: 12pt;
+  --fontsize: 10pt;
+  --font: monospace;
 }
 .cm-s-theme.CodeMirror{
+  font-family: var(--font);
   font-size: var(--fontsize);
 }
 
@@ -60,6 +62,6 @@
 
 .cm-s-theme .CodeMirror-activeline-background { background: var(--activebg); }
 .cm-s-theme .CodeMirror-matchingbracket {
-  text-decoration: underline;
+  background: var(--selection);
   color: var(--cursor) !important;
 }

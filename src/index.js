@@ -10,6 +10,11 @@ import 'codemirror/addon/fold/foldgutter.css'
 import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
 import 'codemirror/addon/fold/indent-fold.js';
+//brackets imports
+import 'codemirror/addon/edit/matchbrackets.js'
+import 'codemirror/addon/edit/closebrackets.js'
+//autocomplete imports
+import 'codemirror/addon/hint/anyword-hint.js'
 
 import './themeEditor.js'
 import {setFont} from './themeEditor.js'
@@ -27,6 +32,9 @@ var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
     mode:  "python",
     lineNumbers: true,
     foldGutter: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    showHint: true,
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
     theme: "constTheme"
 });
@@ -36,6 +44,8 @@ var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
     mode:  "python",
     lineNumbers: true,
     foldGutter: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
     theme: "theme"
 });
@@ -46,9 +56,11 @@ fontSizeForm.addEventListener('submit', (e) => {
   //stop page refresh on submit
   e.preventDefault();
 
+  let index = e.target.fonts.selectedIndex;
+  let font = e.target.fonts[index].value;
   let fontSize = e.target.quantity.value;
 
-  setFont(`${fontSize}pt`)
+  setFont(`${fontSize}pt`, font)
   
   //keep things working properly
   originalEditor.refresh();

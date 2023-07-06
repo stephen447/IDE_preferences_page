@@ -58,13 +58,19 @@ function updateColorValues(newColors)
 
     root.setProperty("--fontsize", newColors["fontsize"]);
     root.setProperty("--const_fontsize", newColors["fontsize"]);
+
+    root.setProperty("--font", newColors["font"]);
+    root.setProperty("--const_font", newColors["font"]);
 }
 
-export function setFont(fontSize)
+export function setFont(fontSize, font)
 {
     let root = document.querySelector(':root').style;
     root.setProperty("--fontsize", fontSize);
     colorJson["fontsize"] = fontSize;
+    
+    root.setProperty("--font", font);
+    colorJson["font"] = font;
 
 }
 
