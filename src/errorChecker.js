@@ -1,8 +1,10 @@
 import CodeMirror from "codemirror";
 import { pythonBuiltinFunctions } from "./unavailableKeywords";
-import { check } from "prettier";
 
 CodeMirror.registerHelper("lint", "python", parse);
+
+//TODO: check efficiency of push vs concat, change code?
+//TODO: for
 
 export function parse(doc, options)
 {
@@ -17,7 +19,7 @@ export function parse(doc, options)
         //skip blank lines
         if(tokens.length < 1)
             continue;
-            
+        
         allErrors = allErrors.concat(visitLine(tokens, i));
     }
     return allErrors;
@@ -30,8 +32,7 @@ function visitLine(tokens, lineNumber)
 
     if(tokens[startIndex].type == "keyword")
     {
-        if(tokens[startIndex].string == "def")
-            errors = errors.concat(visitFunction(tokens, startIndex+1, lineNumber));
+        errors = errors.concat(visitKeyword(tokens[startIndex].string, tokens, startIndex, lineNumber));
         
     }
     //not a keyword
@@ -53,7 +54,6 @@ function visitLine(tokens, lineNumber)
 function visitFunction(tokens, start, lineNumber)
 {
     let hasColon = false;
-    let funcName = "";
     let streamPos = start+1;
     let errors = [];
 
@@ -64,12 +64,7 @@ function visitFunction(tokens, start, lineNumber)
     streamPos += skipWhitespace(tokens[streamPos]);
 
     //type of "def" means it's a NAME
-    if(tokens[streamPos].type == "def")
-    {
-        funcName = tokens[streamPos].string;
-    }
-    //the next token is something other than NAME
-    else
+    if(tokens[streamPos].type != "def")
     {
         let message = "Function is missing name"
 
@@ -97,15 +92,8 @@ function visitFunction(tokens, start, lineNumber)
 
     //just makes sure that a colon exists, at some point after the opening parentheses
         //TODO: ensure it comes AFTER close parentheses
-    for(let i = streamPos; i < tokens.length; i++)
-    {
-        //the defined name of the function has type "def"
-        if(tokens[i].string == ":")
-        {
-            hasColon = true;
-        }
-        
-    }
+    if(findColon(tokens, streamPos) != -1)
+        hasColon = true;
 
     //missing colon
     if(!hasColon)
@@ -114,6 +102,45 @@ function visitFunction(tokens, start, lineNumber)
     }
 
     return errors;
+}
+
+//makes sure that there is both an open and close parentheses somewhere in the line
+    //does NOT account for multiple sets, simply checks to make sure there is AT LEAST one of each
+function visitParentheses(tokens, start, lineNumber)
+{
+    let pos = start + skipWhitespace(tokens[start]);
+    //no open parentheses
+    if(tokens[pos].string != "(")
+    {
+        return [getErrorObj("Missing (", "error", lineNumber, tokens[pos])];
+    }
+
+    //from here on out there is an open parentheses
+    pos++;
+
+    for(let i = pos; i < tokens.length; i++)
+    {
+
+        if(tokens[i].string == ")")
+        {
+            return [];
+        }
+    }
+
+    //reached the end of the line with no right parentheses
+    return [getErrorObj("Missing )", "error", lineNumber, tokens[tokens.length-1])];
+}
+
+//returns the index of the token that contains a colon
+function findColon(tokens, start)
+{
+    for(let i = start; i < tokens.length; i++)
+    {
+        if(tokens[i].string == ":")
+            return i;
+    }
+
+    return -1;
 }
 
 function removeLeadingWhitespace(tokens)
@@ -146,32 +173,6 @@ function advanceStream(includeWhitespace, tokens, streamPos)
     return newPos;
 }
 
-//makes sure that there is both an open and close parentheses somewhere in the line
-    //does NOT account for multiple sets, simply checks to make sure there is AT LEAST one of each
-function visitParentheses(tokens, start, lineNumber)
-{
-    let pos = start + skipWhitespace(tokens[start]);
-    //no open parentheses
-    if(tokens[pos].string != "(")
-    {
-        return [getErrorObj("Missing (", "error", lineNumber, tokens[pos])];
-    }
-
-    //from here on out there is an open parentheses
-    pos++;
-
-    for(let i = pos; i < tokens.length; i++)
-    {
-
-        if(tokens[i].string == ")")
-        {
-            return [];
-        }
-    }
-
-    //reached the end of the line with no right parentheses
-    return [getErrorObj("Missing )", "error", lineNumber, tokens[tokens.length-1])];
-}
 
 function getErrorObj(message, severity, lineNumber, token)
 {
@@ -181,4 +182,37 @@ function getErrorObj(message, severity, lineNumber, token)
         from: CodeMirror.Pos(lineNumber, token.start), 
         to: CodeMirror.Pos(lineNumber, token.end)
     };
+}
+
+//returns an array containing an error obj if there is a missing colon, otherwise empty array
+function getMissingColonObj(tokens, startIndex, lineNumber)
+{
+    if(findColon(tokens, startIndex) == -1)
+        return [getErrorObj("Missing colon", "error", lineNumber, tokens[tokens.length-1])];
+    else
+        return [];
+}
+
+function visitKeyword(keyword, tokens, startIndex, lineNumber) 
+{
+    switch(keyword)
+    {
+        case "def":
+            return visitFunction(tokens, startIndex+1, lineNumber);
+        case "if":
+        case "elif":
+        case "else":
+        case "while":
+        case "class":
+        case "with":
+        case "try":
+        case "except":
+        case "finally":
+        case "match":
+        case "case":
+        case "lambda":
+            return getMissingColonObj(tokens, startIndex, lineNumber);
+        default:
+            return [];
+    }
 }

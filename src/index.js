@@ -35,7 +35,16 @@ let startCode =
 def func(test):
     return 5
 
-print("hello world")
+if 2 < 3:
+    print("hello")
+elif 2 > 3:
+    print("goodbye")
+else:
+    print("hello goodbye")
+
+while False:
+    func()
+
 func()
 `
 var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
@@ -66,6 +75,7 @@ var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
     matchBrackets: true,
     autoCloseBrackets: true,
     search: true,
+    lint: true,
     extraKeys: {
         "Esc": function(cm) {cm.display.input.blur()},
         "Ctrl-Space": async function(cm) { cm.showHint({
