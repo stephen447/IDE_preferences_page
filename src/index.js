@@ -8,6 +8,7 @@ import './constTheme.css';
 import 'codemirror/addon/fold/foldgutter.css'
 import 'codemirror/addon/dialog/dialog.css'
 import 'codemirror/addon/hint/show-hint.css'
+import 'codemirror/addon/lint/lint.css'
 //fold imports
 import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
@@ -22,19 +23,43 @@ import 'codemirror/addon/search/searchcursor.js'
 //auto complete
 import 'codemirror/addon/hint/show-hint.js'
 import { hintFunc } from "./hinting.js";
+//linting
+import 'codemirror/addon/lint/lint.js'
+import { parse } from "./errorChecker.js"
 
 import './themeEditor.js'
 import {setFont} from './themeEditor.js'
 
 let startCode = 
 `
-def func():
+def func(test):
     return 5
 
 print("hello world")
+func()
 `
 var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
     value: startCode,
+    mode:  "python",
+    lineNumbers: true,
+    foldGutter: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    search: true,
+    lint: true,
+    extraKeys: {
+        "Esc": function(cm) {cm.display.input.blur()},
+        "Ctrl-Space": async function(cm) { cm.showHint({
+            hint: hintFunc,
+            completeSingle: false
+        })}
+    },
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
+    theme: "constTheme"
+});
+
+var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
+    value: originalEditor.getDoc().linkedDoc(),
     mode:  "python",
     lineNumbers: true,
     foldGutter: true,
@@ -48,30 +73,11 @@ var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
             completeSingle: false
         })}
     },
-    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-    theme: "constTheme"
-});
-
-var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
-    value: originalEditor.getDoc().linkedDoc(),
-    mode:  "python",
-    lineNumbers: true,
-    foldGutter: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-    search:true,
-    extraKeys: {
-        "Esc": function(cm) {cm.display.input.blur()},
-        "Ctrl-Space": async function(cm) { cm.showHint({
-            hint: hintFunc,
-            completeSingle: false
-        })}
-    },
-    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
     theme: "theme"
 });
 
-console.log(originalEditor.getLineTokens(2));
+originalEditor.on("change", (editor) => {parse(editor)});
 
 const fontSizeForm = document.getElementById("fontSizeForm");
 fontSizeForm.addEventListener('submit', (e) => {
@@ -90,3 +96,4 @@ fontSizeForm.addEventListener('submit', (e) => {
   previewEditor.refresh();
   
 });
+

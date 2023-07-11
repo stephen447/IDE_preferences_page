@@ -8,18 +8,6 @@ import CodeMirror from "codemirror";
 var WORD = /[\w$]+/, RANGE = 500;
 var initList = ["apple", "banana", "cantelope", "dandelion", "elephant"];
 
-var keywordRegexStr = "(";
-
-for(let i = 0; i < initList.length; i++)
-{
-    keywordRegexStr += initList[i];
-    if(i != initList.length -1)
-        keywordRegexStr+="|";
-}
-keywordRegexStr+= ")+";
-var keywordRegex = new RegExp(keywordRegexStr, "g");
-console.log(keywordRegex);
-
 //hintFunc is an edited version of CodeMirror's anyword-hint
 export function hintFunc(editor, options) {
     var word = options && options.word || WORD;
