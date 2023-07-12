@@ -1,3 +1,5 @@
+// index.js contains the code for the two editors & for font size & style submission
+
 import CodeMirror from "codemirror";
 import "../index.css";
 import 'codemirror/mode/python/python.js';
@@ -30,6 +32,7 @@ import { parse } from "./errorChecker.js"
 import './themeEditor.js'
 import {setFont} from './themeEditor.js'
 
+//initial code put into the editor
 let startCode = 
 `
 def func(test):
@@ -47,6 +50,8 @@ while False:
 
 func()
 `
+
+//the editor on the left, does not respond to CSS changes
 var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
     value: startCode,
     mode:  "python",
@@ -55,20 +60,21 @@ var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
     matchBrackets: true,
     autoCloseBrackets: true,
     search: true,
-    lint: true,
+    lint: true, //uses CodeMirror.lint.mode, in this case CodeMirror.lint.python
     extraKeys: {
-        "Esc": function(cm) {cm.display.input.blur()},
+        "Esc": function(cm) {cm.display.input.blur()},  //leave focus on the editor with Esc
         "Ctrl-Space": async function(cm) { cm.showHint({
-            hint: hintFunc,
-            completeSingle: false
+            hint: hintFunc,         // show autocompletion
+            completeSingle: false   //does not autocomplete when there is only a single match
         })}
     },
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
     theme: "constTheme"
 });
 
+//the editor on the right, DOES respond to CSS changes
 var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
-    value: originalEditor.getDoc().linkedDoc(),
+    value: originalEditor.getDoc().linkedDoc(), //makes changes in one affect the other
     mode:  "python",
     lineNumbers: true,
     foldGutter: true,
@@ -87,8 +93,7 @@ var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
     theme: "theme"
 });
 
-originalEditor.on("change", (editor) => {parse(editor)});
-
+//for submitting font size & font style
 const fontSizeForm = document.getElementById("fontSizeForm");
 fontSizeForm.addEventListener('submit', (e) => {
 

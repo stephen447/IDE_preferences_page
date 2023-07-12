@@ -1,9 +1,12 @@
-var colorJson = {}; //for saving & loading
-export const colorHtmlElements = setUpColorElements();
+//themeEditor.js is in charge of saving, loading, and changing colors & fonts on the editors
+
+var colorJson = {}; //for saving & loading (stores the colors as a JSON with properties)
+export const colorHtmlElements = setUpColorElements();  //sets the color picker HTML elements
 
 //grabs the HTML elements from the document, then adds event listener to each one
 function setUpColorElements()
 {
+    //declare initial variables
     let colorHtmlElements = [];
     colorJson = {};
     const colorColumns = document.getElementsByClassName("colorColumn");
@@ -18,25 +21,34 @@ function setUpColorElements()
         });
     }
     
+    //also set fontsize
     colorJson["fontsize"] = style.getPropertyValue("--fontsize");
     return colorHtmlElements;
 }
 
+// sets up one color
 function setUpIndividualElement(colorHtmlElements, element, style)
 {
+    //add HTML element
     colorHtmlElements.push(element);
+
+    //set input handler
     element.addEventListener('input', watchColorPicker);
+
+    //set color picker color to the CSS variable
     element.value = style.getPropertyValue("--"+element.id);
 
+    //store the color
     colorJson[element.id] = element.value;
 
 }
 
-//for loading
+//sets colors into their respective CSS variables
 function updateColorValues(newColors)
 {
     let root = document.querySelector(':root').style;
 
+    //for every color picker
     for(let i = 0; i < colorHtmlElements.length; i++)
     {
         let colorId = colorHtmlElements[i].id;
@@ -56,6 +68,7 @@ function updateColorValues(newColors)
     
     }
 
+    //set font and fontsize
     root.setProperty("--fontsize", newColors["fontsize"]);
     root.setProperty("--const_fontsize", newColors["fontsize"]);
 
@@ -63,17 +76,19 @@ function updateColorValues(newColors)
     root.setProperty("--const_font", newColors["font"]);
 }
 
+// on submit; set the font and the fontsize
 export function setFont(fontSize, font)
 {
-    let root = document.querySelector(':root').style;
-    root.setProperty("--fontsize", fontSize);
-    colorJson["fontsize"] = fontSize;
+    let root = document.querySelector(':root').style;   
+    root.setProperty("--fontsize", fontSize);   // set the CSS var
+    colorJson["fontsize"] = fontSize;           // store the font size
     
     root.setProperty("--font", font);
     colorJson["font"] = font;
 
 }
 
+// sets up downloading with a Blob and URL link
 function save()
 {
     //create blob for downloading
@@ -86,6 +101,7 @@ function save()
 
 }
 
+// sets up loading colors into their respective CSS variables
 function load(json)
 {
     let newColors = JSON.parse(json);
@@ -94,6 +110,7 @@ function load(json)
 
 //========================================= INPUT HANDLERS =========================================
 
+//input handler that updates color of preview editor when one of the color pickers changes
 function watchColorPicker(e)
 {
     let root = document.querySelector(':root').style;

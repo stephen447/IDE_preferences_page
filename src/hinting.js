@@ -1,3 +1,5 @@
+//hinting.js is the autocomplete for the editors, adapted from CodeMirror code
+
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 import CodeMirror from "codemirror";
@@ -6,6 +8,8 @@ import CodeMirror from "codemirror";
     // look for lag on large values
 
 var WORD = /[\w$]+/, RANGE = 500;
+
+// TODO: replace this with builtin / custom autocomplete words
 var initList = ["apple", "banana", "cantelope", "dandelion", "elephant"];
 
 //hintFunc is an edited version of CodeMirror's anyword-hint
@@ -29,6 +33,7 @@ export function hintFunc(editor, options) {
     var seen = {};
     var re = new RegExp(word.source, "g");
 
+    /* new code not from anyword-hint*/
     //if there is no word (blank), just put the whole init list in
     if(!curWord)
     {
@@ -48,8 +53,9 @@ export function hintFunc(editor, options) {
     
         }
     }
+    /* New code ends */
 
-    //for words within the document
+    // looking for words within the document
     for (var dir = -1; dir <= 1; dir += 2) {
 
         //get the line and the end line

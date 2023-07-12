@@ -1,12 +1,17 @@
 import CodeMirror from "codemirror";
 import { pythonBuiltinFunctions } from "./unavailableKeywords";
 
+//registers it so that CodeMirror.lint.python = the parse function
 CodeMirror.registerHelper("lint", "python", parse);
 
 //TODO: check efficiency of push vs concat, change code?
-//TODO: for
+//TODO: for statement
+//TODO: potential change that may be cleaner, but probably not necessary for function:
+     // make TokenStream as an object rather than reading line by line
 
-export function parse(doc, options)
+
+// looks at editor's text and finds errors / warnings
+export function parse() 
 {
     let originalEditor = document.querySelector("#originalEditor").firstChild.CodeMirror;
     var allErrors = [];
@@ -25,11 +30,18 @@ export function parse(doc, options)
     return allErrors;
 }
 
+//parse function for every (non blank) line. 
 function visitLine(tokens, lineNumber)
 {
+    //potentially change later when looking for inconsistent spacing
     let startIndex = removeLeadingWhitespace(tokens);
     let errors = [];
 
+    //avoid out of bounds errors
+    if(startIndex > tokens.length-1)
+        return [];
+
+    //is a keyword
     if(tokens[startIndex].type == "keyword")
     {
         errors = errors.concat(visitKeyword(tokens[startIndex].string, tokens, startIndex, lineNumber));
@@ -106,6 +118,7 @@ function visitFunction(tokens, start, lineNumber)
 
 //makes sure that there is both an open and close parentheses somewhere in the line
     //does NOT account for multiple sets, simply checks to make sure there is AT LEAST one of each
+    // (potential) TODO: balance parentheses?
 function visitParentheses(tokens, start, lineNumber)
 {
     let pos = start + skipWhitespace(tokens[start]);
@@ -143,10 +156,11 @@ function findColon(tokens, start)
     return -1;
 }
 
+//removes any whitespace at the start; for linting errors that don't matter with regards to leading whitespace
 function removeLeadingWhitespace(tokens)
 {
     let index = 0;
-    while(tokens[index].string.match(/\s/g))
+    while(index < tokens.length && tokens[index].string.match(/\s/g))
     {
         index++;
     }
@@ -162,6 +176,7 @@ function skipWhitespace(token)
     return 0;
 }
 
+//get the new stream position by increasing by one, and skipping whitespace if flagged to do so
 function advanceStream(includeWhitespace, tokens, streamPos)
 {
     let newPos = streamPos+1;
@@ -173,7 +188,7 @@ function advanceStream(includeWhitespace, tokens, streamPos)
     return newPos;
 }
 
-
+// returns an object so code can call this instead of writing out the object properties every time
 function getErrorObj(message, severity, lineNumber, token)
 {
     return {
@@ -193,12 +208,17 @@ function getMissingColonObj(tokens, startIndex, lineNumber)
         return [];
 }
 
+// determines which function to call when token of type keyword is visited
 function visitKeyword(keyword, tokens, startIndex, lineNumber) 
 {
     switch(keyword)
     {
+        //if the keyword "def" is used then it's a function
         case "def":
             return visitFunction(tokens, startIndex+1, lineNumber);
+        
+        //at the moment these only check for if a colon is missing
+            //in the python grammar, all of these keywords require a colon at some point
         case "if":
         case "elif":
         case "else":
