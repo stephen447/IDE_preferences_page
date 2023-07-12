@@ -12,32 +12,53 @@ CodeMirror.registerHelper("lint", "python", parse);
      // make TokenStream as an object rather than reading line by line
 
 
+//TODO: nested functions, etc. (things that create scopes)
+//TODO: update visit block so that it properly visits the next line
 var functionList = [];
+var nextVisitBlock = false;
 
 //TODO: function call scoping
-var scope = {
-    parent: {},
-    functionList: []
+
+var initScope = {
+    parent: null,
+    functionList: [],
+    indent: 0
 }
 
 const tokenStream = {
     pos: 0,
     line: 0,
-    scope: scope,
+    scope: initScope,
+
+    //move the stream forward
     advance: function()
     {
         this.pos++;
     },
+
+    //move to the next line of the stream
     nextLine: function()
     {
         this.line++;
         this.pos = 0;
     },
+
+    //reset the stream to its initial state (for new parses)
     reset: function()
     {
         this.line = 0;
         this.pos = 0;
-        this.scope = {parent:{}, functionList:[]};
+        this.scope = {parent:null, functionList:[], indent:0};
+    },
+
+    //set the scope to a new one passed in
+    setScope: function(newScope) { this.scope = {...newScope}; },
+
+    //go up a scope level to the parent scope
+    reverseScope: function()
+    {
+        if(this.scope.parent != null)
+            this.scope = this.scope.parent;
     }
 }
 
@@ -62,8 +83,11 @@ export function parse()
         //skip blank lines
         if(tokens.length < 1)
             continue;
-        
-        allErrors = allErrors.concat(visitLine(tokens, i));
+
+        if(nextVisitBlock)
+            allErrors = allErrors.concat(visitBlock(tokens));
+        else
+            allErrors = allErrors.concat(visitLine(tokens, i));
     }
     return allErrors;
 }
@@ -71,9 +95,7 @@ export function parse()
 //parse function for every (non blank) line. 
 function visitLine(tokens)
 {
-    //potentially change later when looking for inconsistent spacing
-    removeLeadingWhitespace(tokens);
-    let errors = [];
+    let errors = checkLeadingWhitespace(tokens);
 
     //avoid out of bounds errors
     if(tokenStream.pos > tokens.length-1)
@@ -127,6 +149,34 @@ function visitKeyword(keyword, tokens)
     }
 }
 
+function visitBlock(tokens)
+{
+    // check for indentation == new scope level
+        // first line of block sets indentation level
+        // all following lines must be the same amount indented in
+    // update scope level
+    // the block is over when there is a token on a smaller indentation line
+    nextVisitBlock = false;
+    let firstToken = tokens[tokenStream.pos];
+
+    //first token is not whitespace
+    if(!firstToken.string.match(/\s/g))
+    {
+        return [getErrorObj("Expected indent", "error", tokenStream.line-1, firstToken)];
+    }
+
+    let newScope = { 
+        parent: tokenStream.scope, 
+        functionList: [...tokenStream.scope.functionList], 
+        indent: tokenStream.scope.indent + firstToken.string.length
+    };
+
+    tokenStream.setScope(newScope)
+    
+    return [];
+}
+
+
 // 'def' NAME '(' [params] ')' ['->' expression ] ':' [func_type_comment] block
 //  ASYNC 'def' NAME '(' [params] ')' ['->' expression ] ':' [func_type_comment] block 
 
@@ -164,14 +214,14 @@ function visitFunction(tokens)
 
     //the name of the function already exists
         //note: python lets you create 2 of the same function, but if they have the same parameter list, the latest one takes precedence
-    if(functionList.includes(tokens[tokenStream.pos].string))
+    if(tokenStream.scope.functionList.includes(tokens[tokenStream.pos].string))
     {    
 
         return [getErrorObj(tokens[tokenStream.pos].string + " already exists", "warning", line-1, tokens[tokenStream.pos])];
         
     }
     //function name is good to go so add it to the list
-    functionList.push(tokens[tokenStream.pos].string);
+    tokenStream.scope.functionList.push(tokens[tokenStream.pos].string);
 
 
     //continue the stream
@@ -202,10 +252,11 @@ function visitFunction(tokens)
 }
 
 //assumes that a function call is type variable followed by an open parentheses
+//note: python does not let you call functions that are defined later in the script
 function visitFunctionCall(tokens)
 {
     //if calling function name that does not exist
-    if(!functionList.includes(tokens[tokenStream.pos].string))
+    if(!tokenStream.scope.functionList.includes(tokens[tokenStream.pos].string))
     {
         return [getErrorObj("Function may not have been defined", "warning", tokenStream.line-1, tokens[tokenStream.pos])];
     }
@@ -250,22 +301,49 @@ function findColon(tokens)
     for(let i = tokenStream.pos; i < tokens.length; i++)
     {
         if(tokens[i].string == ":")
+        {
+            //TODO: double check grammar that this is always true
+
+            nextVisitBlock = true; //when you find a colon, the next line will always be a "block"
             return i;
+        }
     }
 
     return -1;
 }
 
-//removes any whitespace at the start; for linting errors that don't matter with regards to leading whitespace
-function removeLeadingWhitespace(tokens)
+//checks to make sure the leading whitespace amount is consistent within the scope
+function checkLeadingWhitespace(tokens)
 {
     let index = 0;
+    let indentLength = 0;
+
+    //while it is in bounds and is a whitespace
     while(index < tokens.length && tokens[index].string.match(/\s/g))
     {
+        indentLength += tokens[index].string.length;
         tokenStream.advance();
         index++;
     }
-    return index;
+
+    let tempScope = {...tokenStream.scope};
+    while(tempScope.parent != null && indentLength != tempScope.indent)
+    {
+        tempScope = tempScope.parent;
+    }
+
+    //we've moved back one or more scopes
+    if(tempScope.parent == null || indentLength == tempScope.indent)
+    {
+        tokenStream.setScope(tempScope);
+    }
+
+    //same scope, inconsistent spacing
+    if(indentLength != tokenStream.scope.indent)
+    {
+        return [getErrorObj("Indentation does not match.", "error", tokenStream.line-1, tokens[index-1])]
+    }
+    return [];
 }
 
 //checks if the token is whitespace, returns 1 if it is, 0 if not
