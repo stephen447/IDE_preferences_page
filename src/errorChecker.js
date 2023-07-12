@@ -1,6 +1,8 @@
 import CodeMirror from "codemirror";
 import { pythonBuiltinFunctions } from "./unavailableKeywords";
 
+//uses this python grammar: https://docs.python.org/3/reference/grammar.html
+
 //registers it so that CodeMirror.lint.python = the parse function
 CodeMirror.registerHelper("lint", "python", parse);
 
@@ -9,12 +11,17 @@ CodeMirror.registerHelper("lint", "python", parse);
 //TODO: potential change that may be cleaner, but probably not necessary for function:
      // make TokenStream as an object rather than reading line by line
 
+//TODO: possibly change data structure for speed?
+var functionList = [];
 
 // looks at editor's text and finds errors / warnings
 export function parse() 
 {
     let originalEditor = document.querySelector("#originalEditor").firstChild.CodeMirror;
     var allErrors = [];
+
+    //reset list on each parse
+    functionList = [];
 
     //for each line
     for(let i = 0; i < originalEditor.getDoc().lastLine(); i++)
@@ -48,12 +55,45 @@ function visitLine(tokens, lineNumber)
         
     }
     //not a keyword
-    else
+    else if(tokens[startIndex].type == "variable")
     {
-
+        
+        if(startIndex+1 < tokens.length && tokens[startIndex+1].string == "(")
+        {
+            errors = errors.concat(visitFunctionCall(tokens, startIndex, lineNumber));
+        }
     }
 
     return errors;
+}
+
+// determines which function to call when token of type keyword is visited
+function visitKeyword(keyword, tokens, startIndex, lineNumber) 
+{
+    switch(keyword)
+    {
+        //if the keyword "def" is used then it's a function
+        case "def":
+            return visitFunction(tokens, startIndex+1, lineNumber);
+        
+        //at the moment these only check for if a colon is missing
+            //in the python grammar, all of these keywords require a colon at some point
+        case "if":
+        case "elif":
+        case "else":
+        case "while":
+        case "class":
+        case "with":
+        case "try":
+        case "except":
+        case "finally":
+        case "match":
+        case "case":
+        case "lambda":
+            return getMissingColonObj(tokens, startIndex, lineNumber);
+        default:
+            return [];
+    }
 }
 
 // 'def' NAME '(' [params] ')' ['->' expression ] ':' [func_type_comment] block
@@ -80,14 +120,27 @@ function visitFunction(tokens, start, lineNumber)
     {
         let message = "Function is missing name"
 
+        //the name of the function is a built-in python function
         if(tokens[streamPos].type == "builtin")
         {
             message = tokens[streamPos].string + " is a built-in function that already exists";
             streamPos++;
         }
-        
+
         return [getErrorObj(message, "error", lineNumber,tokens[streamPos-1])]
     }
+
+    //the name of the function already exists
+        //note: python lets you create 2 of the same function, but if they have the same parameter list, the latest one takes precedence
+    if(functionList.includes(tokens[streamPos].string))
+    {    
+
+        return [getErrorObj(tokens[streamPos].string + " already exists", "warning", lineNumber, tokens[streamPos])];
+        
+    }
+    //function name is good to go so add it to the list
+    functionList.push(tokens[streamPos].string);
+
 
     //continue the stream
     streamPos = advanceStream(false, tokens, streamPos);
@@ -114,6 +167,20 @@ function visitFunction(tokens, start, lineNumber)
     }
 
     return errors;
+}
+
+//assumes that a function call is type variable followed by an open parentheses
+function visitFunctionCall(tokens, start, lineNumber)
+{
+    //if calling function name that does not exist
+    if(!functionList.includes(tokens[start].string))
+    {
+        return [getErrorObj("Function has not been defined", "error", lineNumber, tokens[start])];
+    }
+
+    //TODO: possibly check parentheses
+    return [];
+    
 }
 
 //makes sure that there is both an open and close parentheses somewhere in the line
@@ -206,33 +273,4 @@ function getMissingColonObj(tokens, startIndex, lineNumber)
         return [getErrorObj("Missing colon", "error", lineNumber, tokens[tokens.length-1])];
     else
         return [];
-}
-
-// determines which function to call when token of type keyword is visited
-function visitKeyword(keyword, tokens, startIndex, lineNumber) 
-{
-    switch(keyword)
-    {
-        //if the keyword "def" is used then it's a function
-        case "def":
-            return visitFunction(tokens, startIndex+1, lineNumber);
-        
-        //at the moment these only check for if a colon is missing
-            //in the python grammar, all of these keywords require a colon at some point
-        case "if":
-        case "elif":
-        case "else":
-        case "while":
-        case "class":
-        case "with":
-        case "try":
-        case "except":
-        case "finally":
-        case "match":
-        case "case":
-        case "lambda":
-            return getMissingColonObj(tokens, startIndex, lineNumber);
-        default:
-            return [];
-    }
 }
