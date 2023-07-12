@@ -11,8 +11,35 @@ CodeMirror.registerHelper("lint", "python", parse);
 //TODO: potential change that may be cleaner, but probably not necessary for function:
      // make TokenStream as an object rather than reading line by line
 
-//TODO: possibly change data structure for speed?
+
 var functionList = [];
+
+//TODO: function call scoping
+var scope = {
+    parent: {},
+    functionList: []
+}
+
+const tokenStream = {
+    pos: 0,
+    line: 0,
+    scope: scope,
+    advance: function()
+    {
+        this.pos++;
+    },
+    nextLine: function()
+    {
+        this.line++;
+        this.pos = 0;
+    },
+    reset: function()
+    {
+        this.line = 0;
+        this.pos = 0;
+        this.scope = {parent:{}, functionList:[]};
+    }
+}
 
 // looks at editor's text and finds errors / warnings
 export function parse() 
@@ -20,12 +47,16 @@ export function parse()
     let originalEditor = document.querySelector("#originalEditor").firstChild.CodeMirror;
     var allErrors = [];
 
+    tokenStream.reset();
+
     //reset list on each parse
     functionList = [];
 
     //for each line
     for(let i = 0; i < originalEditor.getDoc().lastLine(); i++)
     {
+        tokenStream.nextLine();
+
         let tokens = originalEditor.getLineTokens(i);
 
         //skip blank lines
@@ -38,29 +69,28 @@ export function parse()
 }
 
 //parse function for every (non blank) line. 
-function visitLine(tokens, lineNumber)
+function visitLine(tokens)
 {
     //potentially change later when looking for inconsistent spacing
-    let startIndex = removeLeadingWhitespace(tokens);
+    removeLeadingWhitespace(tokens);
     let errors = [];
 
     //avoid out of bounds errors
-    if(startIndex > tokens.length-1)
+    if(tokenStream.pos > tokens.length-1)
         return [];
 
     //is a keyword
-    if(tokens[startIndex].type == "keyword")
+    if(tokens[tokenStream.pos].type == "keyword")
     {
-        errors = errors.concat(visitKeyword(tokens[startIndex].string, tokens, startIndex, lineNumber));
-        
+        errors = errors.concat(visitKeyword(tokens[tokenStream.pos].string, tokens));
     }
     //not a keyword
-    else if(tokens[startIndex].type == "variable")
+    else if(tokens[tokenStream.pos].type == "variable")
     {
         
-        if(startIndex+1 < tokens.length && tokens[startIndex+1].string == "(")
+        if(tokenStream.pos+1 < tokens.length && tokens[tokenStream.pos+1].string == "(")
         {
-            errors = errors.concat(visitFunctionCall(tokens, startIndex, lineNumber));
+            errors = errors.concat(visitFunctionCall(tokens));
         }
     }
 
@@ -68,13 +98,14 @@ function visitLine(tokens, lineNumber)
 }
 
 // determines which function to call when token of type keyword is visited
-function visitKeyword(keyword, tokens, startIndex, lineNumber) 
+function visitKeyword(keyword, tokens) 
 {
     switch(keyword)
     {
         //if the keyword "def" is used then it's a function
         case "def":
-            return visitFunction(tokens, startIndex+1, lineNumber);
+            tokenStream.advance();
+            return visitFunction(tokens);
         
         //at the moment these only check for if a colon is missing
             //in the python grammar, all of these keywords require a colon at some point
@@ -90,7 +121,7 @@ function visitKeyword(keyword, tokens, startIndex, lineNumber)
         case "match":
         case "case":
         case "lambda":
-            return getMissingColonObj(tokens, startIndex, lineNumber);
+            return getMissingColonObj(tokens);
         default:
             return [];
     }
@@ -103,79 +134,80 @@ function visitKeyword(keyword, tokens, startIndex, lineNumber)
 // name of function must be the direct next token (excluding whitespace) following def
 // open parentheses should be next token after name
 // colon must be after right parentheses (may have other tokens in between)
-function visitFunction(tokens, start, lineNumber)
+function visitFunction(tokens)
 {
+    let line = tokenStream.line;
     let hasColon = false;
-    let streamPos = start+1;
+    tokenStream.advance();
     let errors = [];
 
     //TODO: check for duplicate func name
     //TODO: check more builtin func name
     //TODO: allow for adding robotify functions as "existing functions?"
     //TODO: check placement of colon?
-    streamPos += skipWhitespace(tokens[streamPos]);
+    skipWhitespace(tokens[tokenStream.pos]);
 
     //type of "def" means it's a NAME
-    if(tokens[streamPos].type != "def")
+    if(tokens[tokenStream.pos].type != "def")
     {
         let message = "Function is missing name"
 
         //the name of the function is a built-in python function
-        if(tokens[streamPos].type == "builtin")
+        if(tokens[tokenStream.pos].type == "builtin")
         {
-            message = tokens[streamPos].string + " is a built-in function that already exists";
-            streamPos++;
+            message = tokens[tokenStream.pos].string + " is a built-in function that already exists";
+            tokenStream.advance();
         }
 
-        return [getErrorObj(message, "error", lineNumber,tokens[streamPos-1])]
+        return [getErrorObj(message, "error", line-1, tokens[tokenStream.pos-1])]
     }
 
     //the name of the function already exists
         //note: python lets you create 2 of the same function, but if they have the same parameter list, the latest one takes precedence
-    if(functionList.includes(tokens[streamPos].string))
+    if(functionList.includes(tokens[tokenStream.pos].string))
     {    
 
-        return [getErrorObj(tokens[streamPos].string + " already exists", "warning", lineNumber, tokens[streamPos])];
+        return [getErrorObj(tokens[tokenStream.pos].string + " already exists", "warning", line-1, tokens[tokenStream.pos])];
         
     }
     //function name is good to go so add it to the list
-    functionList.push(tokens[streamPos].string);
+    functionList.push(tokens[tokenStream.pos].string);
 
 
     //continue the stream
-    streamPos = advanceStream(false, tokens, streamPos);
+    advanceStream(false, tokens);
 
     //check parentheses
-    let parentheses = visitParentheses(tokens, streamPos, lineNumber);
+    let parentheses = visitParentheses(tokens);
 
     //there were errors
     if(parentheses.length > 0)
         return parentheses;
 
     //no errors, continue
-    streamPos = advanceStream(false, tokens, streamPos);
+    advanceStream(false, tokens);
 
     //just makes sure that a colon exists, at some point after the opening parentheses
         //TODO: ensure it comes AFTER close parentheses
-    if(findColon(tokens, streamPos) != -1)
+    if(findColon(tokens) != -1)
         hasColon = true;
 
     //missing colon
     if(!hasColon)
     {
-        errors.push(getErrorObj("Function missing colon", "error", lineNumber, tokens[tokens.length-1]));
+        errors.push(getErrorObj("Function missing colon", "error", line-1, tokens[tokens.length-1]));
     }
 
     return errors;
 }
 
 //assumes that a function call is type variable followed by an open parentheses
-function visitFunctionCall(tokens, start, lineNumber)
+function visitFunctionCall(tokens)
 {
     //if calling function name that does not exist
-    if(!functionList.includes(tokens[start].string))
+    if(!functionList.includes(tokens[tokenStream.pos].string))
     {
-        return [getErrorObj("Function has not been defined", "error", lineNumber, tokens[start])];
+        return [getErrorObj("Function may not have been defined", "warning", tokenStream.line-1, tokens[tokenStream.pos])];
     }
 
     //TODO: possibly check parentheses
@@ -186,19 +218,20 @@ function visitFunctionCall(tokens, start, lineNumber)
 //makes sure that there is both an open and close parentheses somewhere in the line
     //does NOT account for multiple sets, simply checks to make sure there is AT LEAST one of each
     // (potential) TODO: balance parentheses?
-function visitParentheses(tokens, start, lineNumber)
+function visitParentheses(tokens)
 {
-    let pos = start + skipWhitespace(tokens[start]);
+    skipWhitespace(tokens[tokenStream.pos]);
+
     //no open parentheses
-    if(tokens[pos].string != "(")
+    if(tokens[tokenStream.pos].string != "(")
     {
-        return [getErrorObj("Missing (", "error", lineNumber, tokens[pos])];
+        return [getErrorObj("Missing (", "error", tokenStream.line-1, tokens[tokenStream.pos])];
     }
 
     //from here on out there is an open parentheses
-    pos++;
+    tokenStream.advance();
 
-    for(let i = pos; i < tokens.length; i++)
+    for(let i = tokenStream.pos; i < tokens.length; i++)
     {
 
         if(tokens[i].string == ")")
@@ -208,13 +241,13 @@ function visitParentheses(tokens, start, lineNumber)
     }
 
     //reached the end of the line with no right parentheses
-    return [getErrorObj("Missing )", "error", lineNumber, tokens[tokens.length-1])];
+    return [getErrorObj("Missing )", "error", tokenStream.line-1, tokens[tokens.length-1])];
 }
 
 //returns the index of the token that contains a colon
-function findColon(tokens, start)
+function findColon(tokens)
 {
-    for(let i = start; i < tokens.length; i++)
+    for(let i = tokenStream.pos; i < tokens.length; i++)
     {
         if(tokens[i].string == ":")
             return i;
@@ -229,6 +262,7 @@ function removeLeadingWhitespace(tokens)
     let index = 0;
     while(index < tokens.length && tokens[index].string.match(/\s/g))
     {
+        tokenStream.advance();
         index++;
     }
     return index;
@@ -238,21 +272,22 @@ function removeLeadingWhitespace(tokens)
 function skipWhitespace(token)
 {
     if(token.string.match(/\s/g))
+    {
+        tokenStream.advance();
         return 1;
-
+    }
     return 0;
 }
 
 //get the new stream position by increasing by one, and skipping whitespace if flagged to do so
-function advanceStream(includeWhitespace, tokens, streamPos)
+function advanceStream(includeWhitespace, tokens)
 {
-    let newPos = streamPos+1;
+    tokenStream.advance();
 
     if(!includeWhitespace)
-        newPos += skipWhitespace(tokens[newPos]);
+        skipWhitespace(tokens[tokenStream.pos]);
     
 
-    return newPos;
 }
 
 // returns an object so code can call this instead of writing out the object properties every time
@@ -267,10 +302,10 @@ function getErrorObj(message, severity, lineNumber, token)
 }
 
 //returns an array containing an error obj if there is a missing colon, otherwise empty array
-function getMissingColonObj(tokens, startIndex, lineNumber)
+function getMissingColonObj(tokens)
 {
-    if(findColon(tokens, startIndex) == -1)
-        return [getErrorObj("Missing colon", "error", lineNumber, tokens[tokens.length-1])];
+    if(findColon(tokens) == -1)
+        return [getErrorObj("Missing colon", "error", tokenStream.line-1, tokens[tokens.length-1])];
     else
         return [];
 }
