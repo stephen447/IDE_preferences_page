@@ -36,13 +36,23 @@
             <div class="topRowColumn">
                 <form id="fontSizeForm">
                     <label for="quantity">Default Font Size:</label>
-                    <input type="number" id="quantity" name="quantity" min="6" max="100" step="2" value="10">
+                    <input type="number" id="quantity" name="quantity" min="6" max="100" step="2" value="10"><br>
                     <label for="fonts">Font:</label>
                     <select name="fonts" id="fonts">
                         <option value="monospace">Monospace</option>
                         <option value="sans-serif">Sans-Serif</option>
                         <option value="serif">Serif</option>
-                    </select>
+                    </select><br><br>
+                    <input type="submit">
+                  </form>                  
+            </div>
+            <div class="topRowColumn">
+                <form id="booleanForm">
+                    <label for="linting">Linting:</label>
+                    <input type="checkbox" id="linting" name="linting" checked="true"><br>
+                    <label for="autocomplete">Autocomplete:</label>
+                    <input type="checkbox" id="autocomplete" name="autocomplete" checked="true">
+                    <br><br>
                     <input type="submit">
                   </form>                  
             </div>

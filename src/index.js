@@ -103,6 +103,51 @@ var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
     theme: "theme"
 });
 
+const booleanForm = document.getElementById("booleanForm");
+booleanForm.addEventListener('submit', (e) => {
+
+    //prevent page refresh
+    e.preventDefault();
+
+    let lint = e.target.linting.checked;
+    let autocomplete = e.target.autocomplete.checked;
+
+    setEditorsOptions("lint", lint);
+    setAutocomplete(autocomplete);
+    
+    //keep things working properly
+    originalEditor.refresh();
+    previewEditor.refresh();
+  
+})
+
+//sets options for BOTH editors
+function setEditorsOptions(option, value)
+{
+    originalEditor.setOption(option, value);
+    previewEditor.setOption(option, value);
+}
+
+function setAutocomplete(shouldAutocomplete)
+{
+    if(shouldAutocomplete)
+    {
+        originalEditor.options.extraKeys["Ctrl-Space"] = async function(cm) { cm.showHint({
+            hint: hintFunc,
+            completeSingle: false
+        })}
+        previewEditor.options.extraKeys["Ctrl-Space"] = async function(cm) { cm.showHint({
+            hint: hintFunc,
+            completeSingle: false
+        })}
+    }
+    else
+    {
+        originalEditor.options.extraKeys["Ctrl-Space"] = null;
+        previewEditor.options.extraKeys["Ctrl-Space"] = null;
+    }
+}
+
 //for submitting font size & font style
 const fontSizeForm = document.getElementById("fontSizeForm");
 fontSizeForm.addEventListener('submit', (e) => {
