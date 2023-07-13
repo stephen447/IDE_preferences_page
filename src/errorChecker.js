@@ -8,21 +8,16 @@ CodeMirror.registerHelper("lint", "python", parse);
 
 //TODO: check efficiency of push vs concat, change code?
 //TODO: for statement
-//TODO: potential change that may be cleaner, but probably not necessary for function:
-     // make TokenStream as an object rather than reading line by line
+//TODO: linting import functions being defined
 
-
-//TODO: nested functions, etc. (things that create scopes)
-//TODO: update visit block so that it properly visits the next line
 var functionList = [];
 var nextVisitBlock = false;
-
-//TODO: function call scoping
 
 var initScope = {
     parent: null,
     functionList: [],
-    indent: 0
+    indent: 0,
+    indentChar: ""
 }
 
 const tokenStream = {
@@ -48,7 +43,7 @@ const tokenStream = {
     {
         this.line = 0;
         this.pos = 0;
-        this.scope = {parent:null, functionList:[], indent:0};
+        this.scope = {parent:null, functionList:[], indent:0, indentChar: ""};
     },
 
     //set the scope to a new one passed in
@@ -83,11 +78,15 @@ export function parse()
         //skip blank lines
         if(tokens.length < 1)
             continue;
+        
+        //skip lines of ONLY whitespace
+        if(tokens.length == 1 && tokens[0].string.match(/\s/g))
+            continue;
 
         if(nextVisitBlock)
             allErrors = allErrors.concat(visitBlock(tokens));
         else
-            allErrors = allErrors.concat(visitLine(tokens, i));
+            allErrors = allErrors.concat(visitLine(tokens));
     }
     return allErrors;
 }
@@ -95,6 +94,9 @@ export function parse()
 //parse function for every (non blank) line. 
 function visitLine(tokens)
 {
+    if(skipComment(tokens))
+        return [];
+
     let errors = checkLeadingWhitespace(tokens);
 
     //avoid out of bounds errors
@@ -143,6 +145,7 @@ function visitKeyword(keyword, tokens)
         case "match":
         case "case":
         case "lambda":
+        case "for":
             return getMissingColonObj(tokens);
         default:
             return [];
@@ -151,29 +154,40 @@ function visitKeyword(keyword, tokens)
 
 function visitBlock(tokens)
 {
-    // check for indentation == new scope level
-        // first line of block sets indentation level
-        // all following lines must be the same amount indented in
-    // update scope level
-    // the block is over when there is a token on a smaller indentation line
+    let shouldSkip = skipComment(tokens);
+    if(shouldSkip)
+        return [];
+
     nextVisitBlock = false;
     let firstToken = tokens[tokenStream.pos];
 
-    //first token is not whitespace
-    if(!firstToken.string.match(/\s/g))
+    // update scope level
+    let newScope = { 
+        parent: tokenStream.scope, 
+        functionList: [...tokenStream.scope.functionList], 
+        indent: firstToken.string.length,
+        indentChar: firstToken.string
+    };
+
+    tokenStream.setScope(newScope)
+
+    //replace tabs with spaces ONLY for comparing the length of the scope indent
+    let newIndentChar = newScope.indentChar.replace(/\t/g, "    ");
+    let parentIndentChar = newScope.parent.indentChar.replace(/\t/g, "    ")
+
+    // check for indentation == new scope level
+        // first line of block sets indentation level
+        // all following lines must be the same amount indented in
+    // the block is over when there is a token on a smaller indentation line
+
+    //first token is not whitespace or the new indent is shorter than the parent indent
+    if(!firstToken.string.match(/\s/g) || newIndentChar.length <= parentIndentChar.length)
     {
         return [getErrorObj("Expected indent", "error", tokenStream.line-1, firstToken)];
     }
 
-    let newScope = { 
-        parent: tokenStream.scope, 
-        functionList: [...tokenStream.scope.functionList], 
-        indent: tokenStream.scope.indent + firstToken.string.length
-    };
-
-    tokenStream.setScope(newScope)
-    
-    return [];
+    //console.log(tokens,newScope)
+    return visitLine(tokens);
 }
 
 
@@ -191,7 +205,9 @@ function visitFunction(tokens)
     tokenStream.advance();
     let errors = [];
 
-    //TODO: check for duplicate func name
+    if(tokens[tokenStream.pos] == undefined)
+        return [];
+
     //TODO: check more builtin func name
     //TODO: allow for adding robotify functions as "existing functions?"
     //TODO: check placement of colon?
@@ -349,12 +365,29 @@ function checkLeadingWhitespace(tokens)
 //checks if the token is whitespace, returns 1 if it is, 0 if not
 function skipWhitespace(token)
 {
-    if(token.string.match(/\s/g))
+    if(token != undefined && token.string.match(/\s/g))
     {
         tokenStream.advance();
         return 1;
     }
     return 0;
+}
+
+//looks to see if there's anything of value on the line. returns false if there's a token that should be analyzed
+function skipComment(tokens)
+{
+    for(let i = 0; i < tokens.length; i++)
+    {
+        //ignore whitespace
+        if(tokens[i].string.match(/\s/g))
+            continue;
+        
+        //something other than a comment / whitespace exists
+        if(tokens[i].type != "comment")
+            return false;
+    }
+    
+    return true;
 }
 
 //get the new stream position by increasing by one, and skipping whitespace if flagged to do so

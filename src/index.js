@@ -35,20 +35,30 @@ import {setFont} from './themeEditor.js'
 //initial code put into the editor
 let startCode = 
 `
-def func(test):
-    return 5
+import flex
 
-if 2 < 3:
-    print("hello")
-elif 2 > 3:
-    print("goodbye")
-else:
-    print("hello goodbye")
+# Empty list of animal locations.
+animal_locations = []
 
-while False:
-    func()
+for x in range(3):
+	# Sense
+	sensor_object = flex.get_sensor_name()
+	# Compute
+	if sensor_object == "animal":
+		# Act
+		# Move to the animal.
+		distance = flex.get_sensor_distance()
+		flex.move_forward(distance)
+		
+		# Add the animal location to the list.
+		coordinates = flex.get_coordinates()
+		animal_locations.append(coordinates)
+	else:
+		# Act
+		flex.turn(90)
 
-func()
+# Print the collected animal locations.
+print(animal_locations)
 `
 
 //the editor on the left, does not respond to CSS changes
