@@ -6,67 +6,101 @@
         <link rel="stylesheet" href="index.css">
     </head>
     <body>
-        <div id="colorPickingDiv" style="display:flex">
-            <div class="topRowColumn colorColumn">
-                Brackets: <input type="color" id="brackets"><br>
-                Cursor: <input type="color" id="cursor"><br>
-                Selection: <input type="color" id="selection"><br>
-                Line Numbers: <input type="color" id="linenumber"><br>
-                Comments: <input type="color" id="comment"><br>
+        <div id ="teacher_preferences">
+            <h1>Teacher</h1>
+            <input type="checkbox" id="teacher_linter_checkbox" name="teacher_linter_checkbox">
+            <label for="teacher_linter_checkbox"> Linter</label>
+            <input type="checkbox" id="teacher_autocomplete_checkbox" name="teacher_autocomplete_checkbox">
+            <label for="teacher_autocomplete_checkbox"> Autocomplete</label>
+            <div id="teacher_colour_permissions">
+                <h2>Color Permissions</h2>
+                <div class="teacher_colour_column" style="display: flex;">
+                    <input type="checkbox" id="teacher_brackets_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_brackets_colour_checkbox">Brackets</label>
+                    <input type="checkbox" id="teacher_cursor_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_cursor_colour_checkbox">Cursor</label>
+                    <input type="checkbox" id="teacher_selection_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_selection_colour_checkbox">Selection</label>
+                    <input type="checkbox" id="teacher_line_numbers_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_line_numbers_colour_checkbox">Line Numbers</label>
+                    <input type="checkbox" id="teacher_comments_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_comments_colour_checkbox">Comments</label>
+                </div>
+                <div class="teacher_colour_column" style="display: flex;">
+                    <input type="checkbox" id="teacher_literals_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_literals_colour_checkbox">Literals</label>
+                    <input type="checkbox" id="teacher_attributes_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_attributes_colour_checkbox">Attributes</label>
+                    <input type="checkbox" id="teacher_def_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_def_colour_checkbox">Def</label>
+                    <input type="checkbox" id="teacher_tag_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_tag_colour_checkbox">Tag</label>
+                    <input type="checkbox" id="teacher_type_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_type_colour_checkbox">Type</label>
+                </div>
+                <div class="teacher_colour_column" style="display: flex;">
+                    <input type="checkbox" id="teacher_property_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_property_colour_checkbox">Property</label>
+                    <input type="checkbox" id="teacher_keyword_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_keyword_colour_checkbox">Keyword</label>
+                    <input type="checkbox" id="teacher_builtin_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_builtin_colour_checkbox">Built-in</label>
+                    <input type="checkbox" id="teacher_string_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_string_colour_checkbox">String</label>
+                    <input type="checkbox" id="teacher_variable_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="teacher_variable_colour_checkbox">Variable</label>
+                </div>
             </div>
-            <div class="topRowColumn colorColumn">
-                Literals: <input type="color" id="literal"><br>
-                Attributes: <input type="color" id="attribute"><br>
-                Def: <input type="color" id="def"><br>
-                Tag: <input type="color" id="tag"><br>
-                Type: <input type="color" id="type"><br>
-            </div>
-            <div class="topRowColumn colorColumn">
-                Property: <input type="color" id="property"><br>
-                Keyword: <input type="color" id="keyword"><br>
-                Built-in: <input type="color" id="builtin"><br>
-                String: <input type="color" id="string"><br>
-                Variable: <input type="color" id="variable"><br>
-            </div>
-            <div class="topRowColumn colorColumn">
-                Function: <input type="color" id="function"><br>
-                Background: <input type="color" id="bg"><br>
-                Active Background: <input type="color" id="activebg"><br>
-            </div>
-            <div class="topRowColumn">
-                <form id="fontSizeForm">
-                    <label for="quantity">Default Font Size:</label>
-                    <input type="number" id="quantity" name="quantity" min="6" max="100" step="2" value="10"><br>
-                    <label for="fonts">Font:</label>
-                    <select name="fonts" id="fonts">
-                        <option value="monospace">Monospace</option>
-                        <option value="sans-serif">Sans-Serif</option>
-                        <option value="serif">Serif</option>
-                    </select><br><br>
-                    <input type="submit">
-                  </form>                  
-            </div>
-            <div class="topRowColumn">
-                <form id="booleanForm">
-                    <label for="linting">Linting:</label>
-                    <input type="checkbox" id="linting" name="linting" checked="true"><br>
-                    <label for="autocomplete">Autocomplete:</label>
-                    <input type="checkbox" id="autocomplete" name="autocomplete" checked="true">
-                    <br><br>
-                    <input type="submit">
-                  </form>                  
-            </div>
+            <a id="teacherSaveLink" href="#"><button id="teacher_save_btn">Save</button></a>
         </div>
-        <hr>
-        <div>
-            Upload a Theme: <input type="file" id="uploadTheme">
-            Save Theme: <a id="saveLink" href="#"><button id="saveTheme">Save Theme</button></a>
+
+        <div id = "student_preferences">
+            <h1>Student</h1>
+            <input type="checkbox" id="student_linter_checkbox" name="student_linter_checkbox">
+            <label for="student_linter_checkbox"> Linter</label>
+            <input type="checkbox" id="student_autocomplete_checkbox" name="student_autocomplete_checkbox">
+            <label for="student_autocomplete_checkbox"> Autocomplete</label>
+
+            <div id="student_colour_permissions">
+                <h2>Color Permissions</h2>
+                <div class="student_colour_column" style="display: flex;">
+                    <input type="checkbox" id="student_brackets_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_brackets_colour_checkbox">Brackets</label>
+                    <input type="checkbox" id="student_cursor_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_cursor_colour_checkbox">Cursor</label>
+                    <input type="checkbox" id="student_selection_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_selection_colour_checkbox">Selection</label>
+                    <input type="checkbox" id="student_ine_numbers_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_line_numbers_colour_checkbox">Line Numbers</label>
+                    <input type="checkbox" id="student_comments_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_comments_colour_checkbox">Comments</label>
+                </div>
+                <div class="student_colour_column" style="display: flex;">
+                    <input type="checkbox" id="student_literals_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_literals_colour_checkbox">Literals</label>
+                    <input type="checkbox" id="student_attributes_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_attributes_colour_checkbox">Attributes</label>
+                    <input type="checkbox" id="student_def_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_def_colour_checkbox">Def</label>
+                    <input type="checkbox" id="student_tag_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_tag_colour_checkbox">Tag</label>
+                    <input type="checkbox" id="student_type_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_type_colour_checkbox">Type</label>
+                </div>
+                <div class="student_colour_column" style="display: flex;">
+                    <input type="checkbox" id="student_property_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_property_colour_checkbox">Property</label>
+                    <input type="checkbox" id="student_keyword_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_keyword_colour_checkbox">Keyword</label>
+                    <input type="checkbox" id="student_builtin_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_builtin_colour_checkbox">Built-in</label>
+                    <input type="checkbox" id="student_string_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_string_colour_checkbox">String</label>
+                    <input type="checkbox" id="student_variable_colour_checkbox" name="colour_permission_checkbox">
+                    <label for="student_variable_colour_checkbox">Variable</label>
+                </div>
+            </div>
+            <a id="studentSaveLink" href="#"><button id="student_save_btn">Save</button></a>
         </div>
-        <br>
-        <div>
-            <div class="codeEditor" id="originalEditor"></div>
-            <div class="codeEditor" id="previewEditor"></div>
-        </div>
-    </body>
-    
+    </body>  
 </html>

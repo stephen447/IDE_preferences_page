@@ -1,169 +1,47 @@
-// index.js contains the code for the two editors & for font size & style submission
+var teacher_permissions = {} // Array for storing the teacher permissions
+var student_permissions = {} // Array for storing the student permissions
 
-import CodeMirror from "codemirror";
-import "../index.css";
-import 'codemirror/mode/python/python.js';
-//css imports
-import 'codemirror/lib/codemirror.css';
-import './theme.css';
-import './constTheme.css';
-import 'codemirror/addon/fold/foldgutter.css'
-import 'codemirror/addon/dialog/dialog.css'
-import 'codemirror/addon/hint/show-hint.css'
-import 'codemirror/addon/lint/lint.css'
-//fold imports
-import 'codemirror/addon/fold/foldcode.js'
-import 'codemirror/addon/fold/foldgutter.js'
-import 'codemirror/addon/fold/indent-fold.js';
-//brackets imports
-import 'codemirror/addon/edit/matchbrackets.js'
-import 'codemirror/addon/edit/closebrackets.js'
-//search imports
-import 'codemirror/addon/dialog/dialog.js'
-import 'codemirror/addon/search/search.js'
-import 'codemirror/addon/search/searchcursor.js'
-//auto complete
-import 'codemirror/addon/hint/show-hint.js'
-import { hintFunc } from "./hinting.js";
-//linting
-import 'codemirror/addon/lint/lint.js'
-import { parse } from "./errorChecker.js"
+// Retrieving the different elements in the HTML document
+const teacher_linter_cb = document.querySelector('#teacher_linter_checkbox');
+const teacher_autocomplete_cb = document.querySelector('#teacher_autocomplete_checkbox');
+const teacher_save_btn = document.querySelector('#teacher_save_btn');
+const student_linter_cb = document.querySelector('#student_linter_checkbox');
+const student_autocomplete_cb = document.querySelector('#student_autocomplete_checkbox');
+const student_save_button = document.querySelector('#student_save_btn');
+// Retrieving the colour preference elements in HTML document
+const teacherColourPreferences = document.getElementsByClassName("teacher_colour_column");
+const studentColourPreferences = document.getElementsByClassName("student_colour_column");
 
-import './themeEditor.js'
-import {setFont} from './themeEditor.js'
-
-//initial code put into the editor
-let startCode = 
-`
-import flex
-
-# Empty list of animal locations.
-animal_locations = []
-
-for x in range(3):
-	# Sense
-	sensor_object = flex.get_sensor_name()
-	# Compute
-	if sensor_object == "animal":
-		# Act
-		# Move to the animal.
-		distance = flex.get_sensor_distance()
-		flex.move_forward(distance)
-		
-		# Add the animal location to the list.
-		coordinates = flex.get_coordinates()
-		animal_locations.append(coordinates)
-	else:
-		# Act
-		flex.turn(90)
-
-# Print the collected animal locations.
-print(animal_locations)
-`
-
-//the editor on the left, does not respond to CSS changes
-var originalEditor = CodeMirror(document.getElementById("originalEditor"), {
-    value: startCode,
-    mode:  "python",
-    lineNumbers: true,
-    foldGutter: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-    search: true,
-    lint: true, //uses CodeMirror.lint.mode, in this case CodeMirror.lint.python
-    extraKeys: {
-        "Esc": function(cm) {cm.display.input.blur()},  //leave focus on the editor with Esc
-        "Ctrl-Space": async function(cm) { cm.showHint({
-            hint: hintFunc,         // show autocompletion
-            completeSingle: false   //does not autocomplete when there is only a single match
-        })}
-    },
-    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
-    theme: "constTheme"
-});
-
-//the editor on the right, DOES respond to CSS changes
-var previewEditor = CodeMirror(document.getElementById("previewEditor"), {
-    value: originalEditor.getDoc().linkedDoc(), //makes changes in one affect the other
-    mode:  "python",
-    lineNumbers: true,
-    foldGutter: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-    search: true,
-    lint: true,
-    extraKeys: {
-        "Esc": function(cm) {cm.display.input.blur()},
-        "Ctrl-Space": async function(cm) { cm.showHint({
-            hint: hintFunc,
-            completeSingle: false
-        })}
-    },
-    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
-    theme: "theme"
-});
-
-const booleanForm = document.getElementById("booleanForm");
-booleanForm.addEventListener('submit', (e) => {
-
-    //prevent page refresh
-    e.preventDefault();
-
-    let lint = e.target.linting.checked;
-    let autocomplete = e.target.autocomplete.checked;
-
-    setEditorsOptions("lint", lint);
-    setAutocomplete(autocomplete);
+// Functions for retirieving the state of checkboxes and storing in JSON file
+function teacher_save_btn_event(){
+    teacher_permissions["teacher_linter"]=teacher_linter_cb.checked
+    teacher_permissions["teacher_autocomplete"] = teacher_autocomplete_cb.checked
+    for(let i = 0; i < teacherColourPreferences.length; i++){
+        Array.from(teacherColourPreferences[i].getElementsByTagName("input")).forEach(element => {
+            teacher_permissions[element.id]=element.checked
+        });
+    }
     
-    //keep things working properly
-    originalEditor.refresh();
-    previewEditor.refresh();
-  
-})
-
-//sets options for BOTH editors
-function setEditorsOptions(option, value)
-{
-    originalEditor.setOption(option, value);
-    previewEditor.setOption(option, value);
+    let blob = new Blob([JSON.stringify(teacher_permissions)], {type: 'application/json'});
+    let link = document.getElementById("teacherSaveLink");
+    link.download = "teacher_permissions.json";
+    link.href = URL.createObjectURL(blob);
 }
 
-function setAutocomplete(shouldAutocomplete)
-{
-    if(shouldAutocomplete)
-    {
-        originalEditor.options.extraKeys["Ctrl-Space"] = async function(cm) { cm.showHint({
-            hint: hintFunc,
-            completeSingle: false
-        })}
-        previewEditor.options.extraKeys["Ctrl-Space"] = async function(cm) { cm.showHint({
-            hint: hintFunc,
-            completeSingle: false
-        })}
+function student_save_btn_event(){
+    student_permissions["student_linter"]=student_linter_cb.checked
+    student_permissions["student_autocomplete"] = student_autocomplete_cb.checked
+    for(let i = 0; i < studentColourPreferences.length; i++){
+        Array.from(studentColourPreferences[i].getElementsByTagName("input")).forEach(element => {
+            student_permissions[element.id]=element.checked
+        });
     }
-    else
-    {
-        originalEditor.options.extraKeys["Ctrl-Space"] = null;
-        previewEditor.options.extraKeys["Ctrl-Space"] = null;
-    }
+    
+    let blob = new Blob([JSON.stringify(student_permissions)], {type: 'application/json'});
+    let link = document.getElementById("studentSaveLink");
+    link.download = "student_permissions.json";
+    link.href = URL.createObjectURL(blob);
 }
 
-//for submitting font size & font style
-const fontSizeForm = document.getElementById("fontSizeForm");
-fontSizeForm.addEventListener('submit', (e) => {
-
-  //stop page refresh on submit
-  e.preventDefault();
-
-  let index = e.target.fonts.selectedIndex;
-  let font = e.target.fonts[index].value;
-  let fontSize = e.target.quantity.value;
-
-  setFont(`${fontSize}pt`, font)
-  
-  //keep things working properly
-  originalEditor.refresh();
-  previewEditor.refresh();
-  
-});
-
+teacher_save_btn.onclick = teacher_save_btn_event
+student_save_btn.onclick = student_save_btn_event
